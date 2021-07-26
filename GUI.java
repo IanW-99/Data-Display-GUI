@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.awt.event.ActionListener;
 import java.awt.Color;
 import java.awt.Dimension;
-//import java.awt.Insets;
 import java.awt.event.ActionEvent;
 
 public class GUI{
@@ -18,7 +17,7 @@ public class GUI{
 	private JButton refresh;
 	private JFrame frame;
 	private JMenuBar menuBar;
-	private JMenu menu1;
+	private JMenu dataMenu;
 	private List<DataPoints> dataPoints;
 	
 	private int frameWidth = 900;
@@ -36,7 +35,7 @@ public class GUI{
 		refresh = new JButton("Refresh Graph");
 		
 		menuBar = new JMenuBar();
-		menu1 = new JMenu("Menu 1");
+		dataMenu = new JMenu("Data CheckBoxes");
 		
 		}
 		
@@ -46,16 +45,25 @@ public class GUI{
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(new Dimension(frameWidth, frameHeight));
 		frame.setResizable(false);
-		//frameInsets = frame.getInsets();
-		
 		frame.setBackground(Color.BLUE);
 		
+		//Organizing check boxes
+		int previousXTrue = Integer.MAX_VALUE;
+		JMenu newMenu = null;
+		
 		for(int i=0; i<dataPoints.size(); i++) {
-			menu1.add(dataPoints.get(i).getCheckBox());
-			dataPoints.get(i).getCheckBox().setVisible(true);
+			int xTrue = dataPoints.get(i).getIndex(0);
+			if(xTrue != previousXTrue) {
+				newMenu = new JMenu("xTrue = " + xTrue);
+				dataMenu.add(newMenu);
+				newMenu.add(dataPoints.get(i).getCheckBox());
+			} else {
+				newMenu.add(dataPoints.get(i).getCheckBox());
+			}
+			previousXTrue = xTrue;
 		}
 		
-		menuBar.add(menu1);
+		menuBar.add(dataMenu);
 		frame.setJMenuBar(menuBar);
 		
 		backPanel = new JPanel();
@@ -115,9 +123,11 @@ public class GUI{
 			String line = reader.readLine();
 			
 			while(line != null) { 
-				JCheckBox newCheckBox = new JCheckBox("checkbox " + (dataPoints.size() + 1));
+				JCheckBox newCheckBox = new JCheckBox("placeholder");
 				newCheckBox.setSelected(true);
-				dataPoints.add(new DataPoints(line, newCheckBox));
+				DataPoints dataBeingCreated = new DataPoints(line, newCheckBox);
+				dataPoints.add(dataBeingCreated);
+				newCheckBox.setText("(" + dataBeingCreated.getIndex(0) + ", " + dataBeingCreated.getIndex(1) + ")");
 				newCheckBox.addActionListener(checkBoxListener);
 				
 				line = reader.readLine();
@@ -127,6 +137,40 @@ public class GUI{
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		
+		//Selection sort of xTrue
+		int minXTrue;
+		int xTrue;
+		int yTrue;
+		int indexToBeSwapped = 0;
+		int minYTrue;
+		DataPoints temp;
+		
+		for(int i=0; i<dataPoints.size(); i++) {
+			minXTrue = Integer.MAX_VALUE;
+			minYTrue = Integer.MAX_VALUE;
+			for(int j = i; j<dataPoints.size(); j++) {
+				xTrue = dataPoints.get(j).getIndex(0);
+				yTrue = dataPoints.get(j).getIndex(1);
+				if(xTrue < minXTrue) {
+					minXTrue = xTrue;
+					minYTrue = yTrue;
+					indexToBeSwapped = j;
+				} 
+				else if(xTrue == minXTrue) {
+					if(yTrue < minYTrue) {
+						minXTrue = xTrue;
+						minYTrue = yTrue;
+						indexToBeSwapped = j;
+					}
+				}
+			}
+			temp = dataPoints.get(i);
+			dataPoints.set(i, dataPoints.get(indexToBeSwapped));
+			dataPoints.set(indexToBeSwapped, temp);
+			temp = null;
+		}
+		
 	}
 	
 	public void setPoints() {
