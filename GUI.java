@@ -20,29 +20,24 @@ import java.awt.BorderLayout;
 
 public class GUI{
 
-	private JButton refresh;
-	private JButton enableCheckBoxes;
-	private JButton disableCheckBoxes;
-	private JLabel clickCoords;
-	private JLabel clickData;
-	private Dimension labelSize;
-	private Dimension secondaryLabelSize;
-	private JFrame frame;
-	private JMenuBar menuBar;
-	private JMenu dataMenu;
+	private final JButton refresh;
+	private final JButton enableCheckBoxes;
+	private final JButton disableCheckBoxes;
+	private final JLabel clickCoords;
+	private final JLabel clickData;
+	private final JFrame frame;
+	private final JMenuBar menuBar;
+	private final JMenu dataMenu;
 	private List<DataPoint> dataPoints;
 	private DataPoint selectedDataPoint;
 
 	// change data text file here
-	private String dataFile;
+	private final String dataFile;
 
-	private int frameWidth = 1200;
-	private int frameHeight = 700;
 	//private Insets frameInsets;
 
 	private PlotPanel truePlotPanel;
 	private PlotPanel imagePlotPanel;
-	private JPanel backPanel;
 
 
 	public GUI(String dataFile) throws IOException {
@@ -65,18 +60,20 @@ public class GUI{
 
 		frame.getContentPane();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		int frameWidth = 1200;
+		int frameHeight = 700;
 		frame.setSize(new Dimension(frameWidth, frameHeight));
 		frame.setResizable(false);
 		frame.setBackground(Color.BLUE);
 
 		// forcing coordinate label to not resize
-		labelSize = new Dimension(150, 100);
+		Dimension labelSize = new Dimension(150, 100);
 		clickCoords.setFont(new Font("Tahoma", Font.BOLD, 14));
 		clickCoords.setMinimumSize(labelSize);
 		clickCoords.setPreferredSize(labelSize);
 		clickCoords.setMaximumSize(labelSize);
 
-		secondaryLabelSize = new Dimension(250, 100);
+		Dimension secondaryLabelSize = new Dimension(250, 100);
 		clickData.setFont(new Font("Tahoma", Font.BOLD, 14));
 		clickData.setMinimumSize(secondaryLabelSize);
 		clickData.setPreferredSize(secondaryLabelSize);
@@ -86,15 +83,15 @@ public class GUI{
 		double previousXTrue = Integer.MAX_VALUE;
 		JMenu newMenu = null;
 
-		for(int i=0; i<dataPoints.size(); i++) {
-			double xTrue = dataPoints.get(i).xTrue;
-			if((int) xTrue != (int) previousXTrue) {
+		for (DataPoint dataPoint : dataPoints) {
+			double xTrue = dataPoint.xTrue;
+			if ((int) xTrue != (int) previousXTrue) {
 				newMenu = new JMenu("xTrue = " + (int) xTrue);
 				dataMenu.add(newMenu);
-				newMenu.add(dataPoints.get(i).getCheckBox());
 			} else {
-				newMenu.add(dataPoints.get(i).getCheckBox());
+				assert newMenu != null;
 			}
+			newMenu.add(dataPoint.getCheckBox());
 			previousXTrue = xTrue;
 		}
 
@@ -104,7 +101,7 @@ public class GUI{
 		menuBar.add(refresh);
 		frame.setJMenuBar(menuBar);
 
-		backPanel = new JPanel(new BorderLayout(200, 50));
+		JPanel backPanel = new JPanel(new BorderLayout(200, 50));
 
 		try {
 			truePlotPanel = new PlotPanel(0, dataFile);
@@ -119,7 +116,7 @@ public class GUI{
 		backPanel.add(clickData, BorderLayout.NORTH);
 
 		truePlotPanel.addMouseListener(trueMouseLocationListener);
-		imagePlotPanel.addMouseListener(imageMouseLocationListener);
+		//imagePlotPanel.addMouseListener(imageMouseLocationListener);
 
 
 		frame.add(backPanel);
@@ -174,6 +171,7 @@ public class GUI{
 			e.printStackTrace();
 		}
 
+		assert lineCheck != null;
 		lineCheck.close();
 
 
@@ -186,14 +184,14 @@ public class GUI{
 
 			while(line != null) {
 				List<String> seperatedDataString = Arrays.asList(line.split(","));
-				double xTrue = Double.valueOf(seperatedDataString.get(0));
-				double yTrue = Double.valueOf(seperatedDataString.get(1));
+				double xTrue = Double.parseDouble(seperatedDataString.get(0));
+				double yTrue = Double.parseDouble(seperatedDataString.get(1));
 				boolean found = false;
 				DataPoint foundDataPoint = null;
-				for(int i = 0; i < dataPoints.size(); i++) {
-					if(dataPoints.get(i).xTrue == xTrue && dataPoints.get(i).yTrue == yTrue) {
+				for (DataPoint dataPoint : dataPoints) {
+					if (dataPoint.xTrue == xTrue && dataPoint.yTrue == yTrue) {
 						found = true;
-						foundDataPoint = dataPoints.get(i);
+						foundDataPoint = dataPoint;
 						break;
 					}
 				}
@@ -206,7 +204,7 @@ public class GUI{
 					newCheckBox.addActionListener(checkBoxListener);
 
 				} else{
-					foundDataPoint.setImageData(Double.valueOf(seperatedDataString.get(2)), Double.valueOf(seperatedDataString.get(3)), Double.valueOf(seperatedDataString.get(4)));
+					foundDataPoint.setImageData(Double.parseDouble(seperatedDataString.get(2)), Double.parseDouble(seperatedDataString.get(3)), Double.parseDouble(seperatedDataString.get(4)));
 				}
 				line = reader.readLine();
 			};
@@ -230,7 +228,7 @@ public class GUI{
 			for(int j = i; j<dataPoints.size(); j++) {
 				xTrue = dataPoints.get(j).xTrue;
 				yTrue = dataPoints.get(j).yTrue;
-				System.out.println(xTrue + " " + yTrue);
+				//System.out.println(xTrue + " " + yTrue);
 				if(xTrue < minXTrue) {
 					minXTrue = xTrue;
 					minYTrue = yTrue;
@@ -255,9 +253,9 @@ public class GUI{
 	// sets the on the plot
 	public void setPoints(PlotPanel plotPanel) {
 
-		for(int i=0; i<dataPoints.size(); i++) {
-			if(dataPoints.get(i).getDisplayStatus()) {
-				plotPanel.addDataPoint(dataPoints.get(i));
+		for (DataPoint dataPoint : dataPoints) {
+			if (dataPoint.getDisplayStatus()) {
+				plotPanel.addDataPoint(dataPoint);
 			}
 		}
 		System.out.println("Done");
@@ -265,16 +263,16 @@ public class GUI{
 	}
 
 	public void enableCheckBoxes(){
-		for(int i=0; i<dataPoints.size(); i++){
-			dataPoints.get(i).changeDisplayStatus(true);
-			dataPoints.get(i).getCheckBox().setSelected(true);
+		for (DataPoint dataPoint : dataPoints) {
+			dataPoint.changeDisplayStatus(true);
+			dataPoint.getCheckBox().setSelected(true);
 		}
 	}
 
 	public void disableCheckBoxes(){
-		for(int i=0; i<dataPoints.size(); i++){
-			dataPoints.get(i).changeDisplayStatus(false);
-			dataPoints.get(i).getCheckBox().setSelected(false);
+		for (DataPoint dataPoint : dataPoints) {
+			dataPoint.changeDisplayStatus(false);
+			dataPoint.getCheckBox().setSelected(false);
 		}
 	}
 
@@ -295,7 +293,7 @@ public class GUI{
 
 			boolean found = false;
 			int index = 0;
-			while(found == false) {
+			while(!found) {
 				if(dataPoints.get(index).getCheckBox() ==  abstractButton) {
 					dataPoints.get(index).changeDisplayStatus(selected);
 					found = true;
@@ -309,6 +307,7 @@ public class GUI{
 	};
 
 	// action listener for mouse clicks
+	/*
 	MouseAdapter imageMouseLocationListener = new MouseAdapter() {
 		public void mouseClicked(MouseEvent e) {
 			Double xCoord = imagePlotPanel.convertXCoord(e.getX());
@@ -325,19 +324,27 @@ public class GUI{
 			}
 		}
 	};
+	 */
 
 	MouseAdapter trueMouseLocationListener = new MouseAdapter() {
 		public void mouseClicked(MouseEvent e) {
 			Double xCoord = truePlotPanel.convertXCoord(e.getX());
 			Double yCoord = truePlotPanel.convertYCoord(e.getY());
-			clickCoords.setText("X = " + xCoord + "; Y = " + yCoord);
+			clickCoords.setText("<html>XTrue = " + xCoord + "; YTrue = " + yCoord);
 			selectedDataPoint = truePlotPanel.dataCheck(xCoord, yCoord);
 			if(selectedDataPoint != null) {
-				clickData.setText("<html>Xtrue = " + selectedDataPoint.xTrue + "; Ytrue = " + selectedDataPoint.yTrue +
-						"<br/> Primary (Ximage, Yimage) = " + selectedDataPoint.primaryXImage + ", " + selectedDataPoint.primaryYImage+ "; Distance = " + selectedDataPoint.primaryCoordDistance +
-						"<br/> Secondary (Ximage, Yimage) = " + selectedDataPoint.secondaryXImage + ", " + selectedDataPoint.secondaryYImage + "; Distance = " + selectedDataPoint.secondaryCoordDistance + "</html>");
+				double[][] imageCoords = new double[selectedDataPoint.coordinatePoints.length][2];
+				for(int i = 1; i < selectedDataPoint.coordinatePoints.length; i++){
+					imageCoords[i-1][0] = selectedDataPoint.coordinatePoints[i][0];
+					imageCoords[i-1][1] = selectedDataPoint.coordinatePoints[i][1];
+					imageCoords[i-1][2] = selectedDataPoint.coordinatePoints[i][2];
+				}
+				for(double[] images: imageCoords){
+					clickCoords.setText("<html>" + clickCoords.getText()+ "<br/>" + images[0] + ", " +
+							images[1] + ", " + images[2] + "</html");
+				}
 				refresh();
-			} else {
+			}else {
 				clickData.setText(null);
 			}
 		}

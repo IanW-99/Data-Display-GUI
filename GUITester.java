@@ -5,14 +5,15 @@ import java.util.Scanner;
 
 public class GUITester {
 
-	public static void main(String args[]) throws IOException {
+	public static void main(String[] args) throws IOException {
 
 		String dataFile = null;
 		Scanner scanner = new Scanner(System.in);
 		System.out.println("Enter data file name");
 		try{
 			String dataFileInput = scanner.nextLine();
-			dataFile = ("/projectnb/ct-lensing/kerr_ray_s1/Results/" + dataFileInput + ".txt");
+			//dataFile = ("/projectnb/ct-lensing/kerr_ray_s1/Results/" + dataFileInput + ".txt"); //use this line for dataFile
+			dataFile = "data.txt"; //for local testing only
 		}
 		catch(Exception e){
 			System.out.println("Error: Invalid file name");

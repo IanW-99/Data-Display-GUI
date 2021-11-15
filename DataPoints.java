@@ -7,7 +7,7 @@ import javax.swing.JCheckBox;
 
 class DataPoint {
 
-	private JCheckBox cb;
+	private final JCheckBox cb;
 	private boolean displayStatus = true;
 	private boolean selected = false;
 	public boolean manyCoords = false;
@@ -23,14 +23,19 @@ class DataPoint {
 	public DataPoint(String dataString, JCheckBox cb) {
 
 		this.cb = cb;
-		displayStatus = true;
 
 		//formatting data
-		List<String> seperatedDataString = Arrays.asList(dataString.split(","));
-		xTrue = Double.valueOf(seperatedDataString.get(0));
-		yTrue = Double.valueOf(seperatedDataString.get(1));
 
-		setImageData(Double.valueOf(seperatedDataString.get(2)), Double.valueOf(seperatedDataString.get(3)), Double.valueOf(seperatedDataString.get(4)));
+		List<String> seperatedDataString = Arrays.asList(dataString.split(","));
+		xTrue = Double.parseDouble(seperatedDataString.get(0));
+		yTrue = Double.parseDouble(seperatedDataString.get(1));
+
+
+		coordinatePoints = new double[10000][3];
+		double xImage = Double.parseDouble(seperatedDataString.get(2));
+		double yImage = Double.parseDouble(seperatedDataString.get(3));
+		double dist = Double.parseDouble(seperatedDataString.get(4));
+		setImageData(xImage, yImage, dist);
 
 
 

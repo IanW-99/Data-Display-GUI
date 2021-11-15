@@ -22,15 +22,12 @@ public class PlotPanel extends JPanel {
 	private int type;
 	private DataPoint lastSelectedPoint;
 	private DataPoint currentSelectedPoint;
-	private String dataFile;
 
 	private List<DataPoint> dataPoints;
 
 	public PlotPanel(int type, String dataFile) throws IOException {
 		// type 0 is for true values and type 1 is for image
 		this.type = type;
-
-		this.dataFile = dataFile;
 
 		setBackground(Color.WHITE);
 		this.setPreferredSize(new Dimension(500, 500));
@@ -50,6 +47,7 @@ public class PlotPanel extends JPanel {
 			e.printStackTrace();
 		}
 
+		assert lineCheck != null;
 		lineCheck.close();
 
 		dataPoints = new ArrayList<DataPoint>(dataLines);
@@ -75,8 +73,6 @@ public class PlotPanel extends JPanel {
 		yaxis = height / 2.0;
 		final double x1 = 0;
 		final double y1 = 0;
-		final double x2 = width;
-		final double y2 = height;
 
 
 		Graphics2D g2 = (Graphics2D) g;
@@ -86,21 +82,21 @@ public class PlotPanel extends JPanel {
 
 		for (double x = spacing; x < width; x += spacing) {
 
-			lines(g2, xaxis + x, y1, xaxis + x, y2);
-			lines(g2, xaxis - x, y1, xaxis - x, y2);
+			lines(g2, xaxis + x, y1, xaxis + x, height);
+			lines(g2, xaxis - x, y1, xaxis - x, height);
 		}
 
 		for (double y = spacing; y < height; y += spacing) {
 
-			lines(g2, x1, yaxis + y, x2, yaxis + y);
-			lines(g2, x1, yaxis - y, x2, yaxis - y);
+			lines(g2, x1, yaxis + y, width, yaxis + y);
+			lines(g2, x1, yaxis - y, width, yaxis - y);
 		}
 
 		g.setColor(Color.BLACK);
 		g2.setStroke(new BasicStroke(2));
 
-		g2.draw(new Line2D.Double(x1, yaxis, x2, yaxis));
-		g2.draw(new Line2D.Double(xaxis, y1, xaxis, y2));
+		g2.draw(new Line2D.Double(x1, yaxis, width, yaxis));
+		g2.draw(new Line2D.Double(xaxis, y1, xaxis, height));
 
 		g.setColor(Color.RED);
 		g2.setStroke(new BasicStroke(5));
@@ -110,16 +106,15 @@ public class PlotPanel extends JPanel {
 		DataPoint storedDataPoint = null;
 
 		if(dataPoints.size() != 0) {
-			for(int i=0; i<dataPoints.size(); i++) {
-				DataPoint currentDataPoint = dataPoints.get(i);
-				if(this.type == 0){
+			for (DataPoint currentDataPoint : dataPoints) {
+				if (this.type == 0) {
 					xCoord = currentDataPoint.xTrue;
 					yCoord = currentDataPoint.yTrue;
-				} else{
-					for(int j = 0; j< currentDataPoint.coordinatePoints.length(); j++){
+				} else {
+					for (int j = 0; j < currentDataPoint.coordinatePoints.length; j++) {
 						xCoord = currentDataPoint.coordinatePoints[j][0];
 						yCoord = currentDataPoint.coordinatePoints[j][1];
-						if(currentDataPoint.getSelectionStatus()){
+						if (currentDataPoint.getSelectionStatus()) {
 							storedDataPoint = currentDataPoint;
 						} else {
 							//System.out.println(xCoord + ", " + yCoord);
@@ -129,17 +124,17 @@ public class PlotPanel extends JPanel {
 					}
 				}
 
-				if(storedDataPoint != null){
-					if(this.type == 0){
+				if (storedDataPoint != null) {
+					if (type == 0) {
 						xCoord = storedDataPoint.xTrue;
 						yCoord = storedDataPoint.yTrue;
 						g.setColor(Color.BLUE);
 						g2.draw(new Line2D.Double((scaling * xCoord) + xaxis, yaxis - (scaling * yCoord),
 								(scaling * xCoord) + xaxis, yaxis - (scaling * yCoord)));
 					} else {
-						for(int j = 0; j< currentDataPoint.coordinatePairs.length(); j++){
-							xCoord = storedDataPoint.primaryXImage;
-							yCoord = storedDataPoint.primaryYImage;
+						for (int j = 1; j < currentDataPoint.coordinatePoints.length; j++) {
+							xCoord = storedDataPoint.coordinatePoints[j][0];
+							yCoord = storedDataPoint.coordinatePoints[j][1];
 							g.setColor(Color.BLUE);
 							g2.draw(new Line2D.Double((scaling * xCoord) + xaxis, yaxis - (scaling * yCoord),
 									(scaling * xCoord) + xaxis, yaxis - (scaling * yCoord)));
@@ -171,27 +166,20 @@ public class PlotPanel extends JPanel {
 	// checks for point with matching mouse coordinates
 	public DataPoint dataCheck(Double xCoord, Double yCoord) {
 		DataPoint returnPoint = null;
-		Double clickError = 0.3;
+		double clickError = 0.3;
 		Range xRange;
 		Range yRange;
 		double dummyValue = 25;
-		Range xRange2 = new Range(dummyValue, dummyValue); //make seoncady ranges larger than plot size to avoid errors while still initializing
+		Range xRange2 = new Range(dummyValue, dummyValue); //make secondary ranges larger than plot size to avoid errors while still initializing
 		Range yRange2 =new Range(dummyValue, dummyValue);
 
-		for(int i=0; i < dataPoints.size(); i++) {
-			DataPoint dataPoint = dataPoints.get(i);
-			if(type == 0){
-				xRange = new Range((dataPoint.xTrue - clickError), (dataPoint.xTrue + clickError));
-				yRange = new Range((dataPoint.yTrue - clickError), (dataPoint.yTrue + clickError));
-			} else {
-				xRange = new Range((dataPoint.primaryXImage - clickError), (dataPoint.primaryXImage + clickError));
-				yRange = new Range((dataPoint.primaryYImage - clickError), (dataPoint.primaryYImage + clickError));
-				//xRange2 = new Range((dataPoint.primaryXImage - clickError), (dataPoint.secondaryXImage + clickError));
-				//yRange2 = new Range((dataPoint.primaryXImage - clickError), (dataPoint.secondaryYImage + clickError));
-			}
-			if((xRange.contains(xCoord) && yRange.contains(yCoord)) || (xRange2.contains(xCoord) && yRange2.contains(yCoord))) {
+		for (DataPoint dataPoint : dataPoints) {
+			xRange = new Range((dataPoint.xTrue - clickError), (dataPoint.xTrue + clickError));
+			yRange = new Range((dataPoint.yTrue - clickError), (dataPoint.yTrue + clickError));
+
+			if ((xRange.contains(xCoord) && yRange.contains(yCoord)) || (xRange2.contains(xCoord) && yRange2.contains(yCoord))) {
 				dataPoint.pointSelected();
-				if(lastSelectedPoint != null){
+				if (lastSelectedPoint != null) {
 					lastSelectedPoint.pointDeselected();
 				}
 				lastSelectedPoint = dataPoint;
